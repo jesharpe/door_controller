@@ -1,3 +1,4 @@
 *.pyc
 .allowed.txt
 .credentials.txt
+.log.txt
