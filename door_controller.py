@@ -28,19 +28,22 @@ class Door_Controller():
   def execute_command(self, command):
     try:
       method = getattr(self, command["method"]) 
-      method(*command["arguments"])
-    except:
-      print "invalid text format"
+      try:
+        method(*command["arguments"])
+      except Exception, error:
+        print error
+    except Exception, error:
+      print error
 
   def get_allowed(self):
     allowed_file = open(".allowed.txt", 'r')
-    for person_string in allowed_file:
-      person_dict = json.loads(person_string)
+    for allowed in allowed_file:
+      person_dict = json.loads(allowed)
       self.allowed[person_dict["number"]] = person_dict
     allowed_file.close()
   
   def unlock(self, door, name):
-#TODO need to write.  already have door connections, and the allowed dictionary has objecs with name number and admin=true/false. (look at .allowed.txt)
+    #TODO need to write.  already have door connections, and the allowed dictionary has objecs with name number and admin=true/false. (look at .allowed.txt)
     print "unlock"
     
   def add(self, name, number, is_admin="false"):
@@ -52,21 +55,23 @@ class Door_Controller():
     print "add"
 
   def remove(self, name=None, number=None):
-#TODO Not working yet. i know the problem though
     line_to_delete = None
-    allowed_file = open(".allowed.txt", 'r+')
-    for person_string in allowed_file:
-      if name:
-        if name in person_string:
-          line_to_delete = person_string
-      elif number:
-        if number in person_string:
-          line_to_delete = person_string
-    allowed_file = open(".allowed.txt", 'w')
-    for person_string in allowed_file:
-      if person_string != line_to_delete:
-        allowed_file.write(person_string + '\n')
+    allowed_file = open(".allowed.txt", 'r')
+    allowed_lines = allowed_file.readlines()
     allowed_file.close()
+    for allowed in allowed_lines:
+      if name:
+        if name in allowed:
+          line_to_delete = allowed
+      elif number:
+        if number in allowed:
+          line_to_delete = allowed
+    if line_to_delete:
+      allowed_file = open(".allowed.txt", 'w+')
+      for allowed in allowed_lines:
+        if allowed != line_to_delete:
+          allowed_file.write(allowed)
+      allowed_file.close()
     print "remove"
 
 class Gmail_Inbox():
@@ -95,7 +100,8 @@ class Door_Lock():
     self.socket = httplib.HTTPConnection(door_ip)
 
   def send_message(self, data):
-#TODO write that shit breahs
+    #TODO write that shit breahs
+    pass
 
 if __name__ == "__main__":
   door_controller = Door_Controller()
