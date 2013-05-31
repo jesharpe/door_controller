@@ -46,7 +46,7 @@ class Door_Controller():
   def add(self, name, number, is_admin="false"):
     allowed_file = open(".allowed.txt", 'a+')
     allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+is_admin+'}')
-    #TODO add to self.allowed dictionary
+    self.allowed[number] = {"name":name, "number":number, "admin":is_admin}
     #TODO add to arduino
     allowed_file.close()
     print "add"
