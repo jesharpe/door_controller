@@ -25,14 +25,21 @@ class Door_Controller():
           self.execute_command(command)
       time.sleep(1.0)
     
+  def write_to_log(message):
+    log = open(".log.txt", "a+")
+    log.write(message)
+    log.close()
+
   def execute_command(self, command):
     try:
       method = getattr(self, command["method"]) 
       try:
         method(*command["arguments"])
       except Exception, error:
+        self.write_to_log(error)
         print error
     except Exception, error:
+      self.write_to_log(error)
       print error
 
   def get_allowed(self):
