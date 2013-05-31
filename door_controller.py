@@ -63,26 +63,26 @@ class Door_Controller():
       #TODO add to arduino
       print "add"
 
-  def remove(self, name=None, number=None):
-    line_to_delete = None
-    allowed_file = open(".allowed.txt", 'r')
-    allowed_lines = allowed_file.readlines()
-    allowed_file.close()
-    for allowed in allowed_lines:
-      if name:
-        if name in allowed:
-          line_to_delete = allowed
-      elif number:
+  def remove(self, number):
+    if number in self.allowed:
+      self.allowed[number] = None
+      del self.allowed[number]
+      line_to_delete = None
+      allowed_file = open(".allowed.txt", 'r')
+      allowed_lines = allowed_file.readlines()
+      allowed_file.close()
+      for allowed in allowed_lines:
         if number in allowed:
           line_to_delete = allowed
-    if line_to_delete:
-      allowed_file = open(".allowed.txt", 'w+')
-      for allowed in allowed_lines:
-        if allowed != line_to_delete:
-          allowed_file.write(allowed)
-      allowed_file.write('\n')
-      allowed_file.close()
-    print "remove"
+      if line_to_delete:
+        allowed_file = open(".allowed.txt", 'w+')
+        for allowed in allowed_lines:
+          if allowed != line_to_delete:
+            allowed_file.write(allowed)
+        allowed_file.write('\n')
+        allowed_file.close()
+      #TODO add to arduino
+      print "remove"
 
 class Gmail_Inbox():
   def __init__(self):
