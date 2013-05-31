@@ -1,3 +1,4 @@
 {"name":"cory", "number":"617.233.2560", "admin":true}
 {"name":"nathan", "number":"904.923.8775", "admin":true}
 {"name":"will", "number":"402.310.5900", "admin":false}
+{"name":"test", "number":"111.111.1111", "admin":false}

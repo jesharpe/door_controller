@@ -25,9 +25,9 @@ class Door_Controller():
           self.execute_command(command)
       time.sleep(1.0)
     
-  def write_to_log(message):
+  def write_to_log(self, message):
     log = open(".log.txt", "a+")
-    log.write(message)
+    log.write(str(message) + '\n')
     log.close()
 
   def execute_command(self, command):
@@ -37,16 +37,17 @@ class Door_Controller():
         method(*command["arguments"])
       except Exception, error:
         self.write_to_log(error)
-        print error
     except Exception, error:
       self.write_to_log(error)
-      print error
 
   def get_allowed(self):
     allowed_file = open(".allowed.txt", 'r')
     for allowed in allowed_file:
-      person_dict = json.loads(allowed)
-      self.allowed[person_dict["number"]] = person_dict
+      try:
+        person_dict = json.loads(allowed)
+        self.allowed[person_dict["number"]] = person_dict
+      except Exception, error:
+        self.write_to_log(error)
     allowed_file.close()
   
   def unlock(self, door, name):
@@ -54,12 +55,13 @@ class Door_Controller():
     print "unlock"
     
   def add(self, name, number, is_admin="false"):
-    allowed_file = open(".allowed.txt", 'a+')
-    allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+is_admin+'}')
-    self.allowed[number] = {"name":name, "number":number, "admin":is_admin}
-    #TODO add to arduino
-    allowed_file.close()
-    print "add"
+    if number not in self.allowed:
+      self.allowed[number] = {"name":name, "number":number, "admin":is_admin}
+      allowed_file = open(".allowed.txt", 'a+')
+      allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+is_admin+'}\n')
+      allowed_file.close()
+      #TODO add to arduino
+      print "add"
 
   def remove(self, name=None, number=None):
     line_to_delete = None
@@ -78,6 +80,7 @@ class Door_Controller():
       for allowed in allowed_lines:
         if allowed != line_to_delete:
           allowed_file.write(allowed)
+      allowed_file.write('\n')
       allowed_file.close()
     print "remove"
 
