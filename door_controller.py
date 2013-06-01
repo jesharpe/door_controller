@@ -65,7 +65,7 @@ class Door_Controller():
     allowed_file = open(ALLOWED_FILE, 'a+')
     allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+is_admin+'}')
     allowed_file.close()
-    self.front_door.send_message("send a message")
+#self.front_door.send_message("send a message")
     print "add"
 
   def Remove(self, name=None, number=None):
@@ -88,7 +88,7 @@ class Door_Controller():
         if allowed != line_to_delete:
           allowed_file.write(allowed)
       allowed_file.close()
-    self.front_door.send_message("send a message")
+#    self.front_door.send_message("send a message")
     print "remove"
 
 class Gmail_Inbox():
