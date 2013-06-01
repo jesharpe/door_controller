@@ -85,10 +85,10 @@ class Door_Controller():
     allowed_file.close()
 
   def Front(self):
-    print "yay"
+    response = self.door_one.open()
 
   def Back(self):
-    print "boo"
+    response = self.door_two.open()
 
   def unlock(self, door, name):
     #TODO need to write.  already have door connections, and the allowed dictionary has objecs with name number and admin=true/false. (look at .allowed.txt)
@@ -122,9 +122,6 @@ class Door_Controller():
       allowed_file.close()
     print "remove"
 
-  def Timeout(self):
-    print "timeout"
-
 class Gmail_Inbox():
   def __init__(self):
     self.mailbox = imaplib.IMAP4_SSL(GMAIL_IMAP)
@@ -153,6 +150,10 @@ class Door_Lock():
   def send_message(self, data):
     #TODO write that shit breahs
     pass
+
+  def open(self, name):
+    self.socket.request("GET", "o %s" % name)
+    return self.socket.getresponse()
 
 if __name__ == "__main__":
   door_controller = Door_Controller()
