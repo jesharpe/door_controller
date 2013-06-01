@@ -16,7 +16,7 @@ USER_KEY = "user"
 PASS_KEY = "pass"
 FRONT_IP_KEY = "front_ip"
 BACK_IP_KEY = "back_ip"
-
+credentials = {}
 class Door_Controller():
 
   def __init__(self):
@@ -29,8 +29,8 @@ class Door_Controller():
     self.gmail_inbox = Gmail_Inbox()
 
     # create door objects
-    self.door_one = Door_Lock(self.credentials[FRONT_IP_KEY])
-    self.door_two = Door_Lock(self.credentials[BACK_IP_KEY])
+    self.door_one = Door_Lock(credentials[FRONT_IP_KEY])
+    self.door_two = Door_Lock(credentials[BACK_IP_KEY])
 
     # load the allowed users
     self.allowed = {}
@@ -40,16 +40,15 @@ class Door_Controller():
     """
     Load credential files from disk. 
     """
-    self.credentials = {}
 
     cred_file = open(CREDENTIALS_FILE, 'r')
 
     for line in cred_file:
       config_dict = json.loads(line)
-      self.credentials[USER_KEY] = config_dict[USER_KEY]
-      self.credentials[PASS_KEY] = config_dict[PASS_KEY]
-      self.credentials[FRONT_IP_KEY] = config_dict[FRONT_IP_KEY]
-      self.credentials[BACK_IP_KEY] = config_dict[BACK_IP_KEY]
+      credentials[USER_KEY] = config_dict[USER_KEY]
+      credentials[PASS_KEY] = config_dict[PASS_KEY]
+      credentials[FRONT_IP_KEY] = config_dict[FRONT_IP_KEY]
+      credentials[BACK_IP_KEY] = config_dict[BACK_IP_KEY]
 
     cred_file.close()
 
@@ -61,7 +60,7 @@ class Door_Controller():
           self.execute_command(command)
       time.sleep(1.0)
     
-  def write_to_log(message):
+  def write_to_log(self, message):
     log = open(".log.txt", "a+")
     log.write(message)
     log.close()
@@ -84,7 +83,13 @@ class Door_Controller():
       person_dict = json.loads(allowed)
       self.allowed[person_dict["number"]] = person_dict
     allowed_file.close()
-  
+
+  def Front(self):
+    print "yay"
+
+  def Back(self):
+    print "boo"
+
   def unlock(self, door, name):
     #TODO need to write.  already have door connections, and the allowed dictionary has objecs with name number and admin=true/false. (look at .allowed.txt)
     print "unlock"
@@ -117,10 +122,13 @@ class Door_Controller():
       allowed_file.close()
     print "remove"
 
+  def Timeout(self):
+    print "timeout"
+
 class Gmail_Inbox():
   def __init__(self):
     self.mailbox = imaplib.IMAP4_SSL(GMAIL_IMAP)
-    self.mailbox.login(self.credentials[USER_KEY], self.credentials[PASS_KEY])
+    self.mailbox.login(credentials[USER_KEY], credentials[PASS_KEY])
 
   def get_command(self):
     command = {}
