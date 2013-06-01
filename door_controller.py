@@ -5,99 +5,73 @@ import httplib
 
 # server for IMAP connections
 GMAIL_IMAP = "imap.gmail.com"
-
 # disk files
 ALLOWED_FILE = ".allowed.txt"
 CREDENTIALS_FILE = ".credentials.txt"
 LOG_FILE = ".log.txt"
-
+# allowed users
+ALLOWED = {}
+# credentials
+CREDENTIALS = {}
 # keys into credentials dictionary
 USER_KEY = "user"
 PASS_KEY = "pass"
 FRONT_IP_KEY = "front_ip"
 BACK_IP_KEY = "back_ip"
-credentials = {}
+
 class Door_Controller():
   def __init__(self):
-    # load credentials
-    self.load_credentials()
     # authenticate with gmail
     self.running = True
     self.gmail_inbox = Gmail_Inbox()
     # create door objects
-    self.door_one = Door_Lock(credentials[FRONT_IP_KEY])
-    self.door_two = Door_Lock(credentials[BACK_IP_KEY])
-    # load the allowed users
-    self.allowed = {}
-    self.get_allowed()
-
-  def load_credentials(self):
-    """
-    Load credential files from disk. 
-    """
-    cred_file = open(CREDENTIALS_FILE, 'r')
-    for line in cred_file:
-      config_dict = json.loads(line)
-      credentials[USER_KEY] = config_dict[USER_KEY]
-      credentials[PASS_KEY] = config_dict[PASS_KEY]
-      credentials[FRONT_IP_KEY] = config_dict[FRONT_IP_KEY]
-      credentials[BACK_IP_KEY] = config_dict[BACK_IP_KEY]
-    cred_file.close()
+    self.front_door = Door_Lock(CREDENTIALS[FRONT_IP_KEY])
+    self.back_door = Door_Lock(CREDENTIALS[BACK_IP_KEY])
 
   def monitor(self):
     while self.running:
       command = self.gmail_inbox.get_command()
       if command:
-        if command["sender"] in self.allowed:
+        print "weeee"
+        if command["sender"] in ALLOWED:
           self.execute_command(command)
       time.sleep(1.0)
     
-  def write_to_log(self, message):
-    log = open(".log.txt", "a+")
-    log.write(message)
-    log.close()
-
   def execute_command(self, command):
     try:
       method = getattr(self, command["method"]) 
       try:
         method(*command["arguments"])
       except Exception, error:
-        self.write_to_log(error)
+        write_to_log(error)
         print error
     except Exception, error:
-      self.write_to_log(error)
+      write_to_log(error)
       print error
 
-  def get_allowed(self):
-    allowed_file = open(ALLOWED_FILE, 'r')
-    for allowed in allowed_file:
-      person_dict = json.loads(allowed)
-      self.allowed[person_dict["number"]] = person_dict
-    allowed_file.close()
-
   def Front(self):
+    print "front door unlocked"
     self.unlock(self.front_door)
-    print "yay"
 
   def Back(self):
+    print "back door unlocked"
     self.unlock(self.front_door)
-    print "boo"
 
   def unlock(self, door):
-    #TODO need to write.  already have door connections, and the allowed dictionary has objecs with name number and admin=true/false. (look at .allowed.txt)
-    print "unlock"
+    door.send_message("send message")
     
   def Add(self, name, number, is_admin="false"):
+    ALLOWED[number] = {"name":name, "number":number, "admin":is_admin}
     allowed_file = open(ALLOWED_FILE, 'a+')
     allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+is_admin+'}')
-    self.allowed[number] = {"name":name, "number":number, "admin":is_admin}
-    #TODO add to arduino
     allowed_file.close()
+    self.front_door.send_message("send a message")
     print "add"
 
   def Remove(self, name=None, number=None):
     line_to_delete = None
+    ALLOWED[number] = None
+    del ALLOWED[number]
     allowed_file = open(ALLOWED_FILE, 'r')
     allowed_lines = allowed_file.readlines()
     allowed_file.close()
@@ -114,12 +88,13 @@ class Door_Controller():
         if allowed != line_to_delete:
           allowed_file.write(allowed)
       allowed_file.close()
+    self.front_door.send_message("send a message")
     print "remove"
 
 class Gmail_Inbox():
   def __init__(self):
     self.mailbox = imaplib.IMAP4_SSL(GMAIL_IMAP)
-    self.mailbox.login(credentials[USER_KEY], credentials[PASS_KEY])
+    self.mailbox.login(CREDENTIALS[USER_KEY], CREDENTIALS[PASS_KEY])
 
   def get_command(self):
     command = {}
@@ -141,10 +116,39 @@ class Door_Lock():
   def __init__(self, door_ip):
     self.socket = httplib.HTTPConnection(door_ip)
 
-  def send_message(self, data):
-    #TODO write that shit breahs
-    pass
+  def send_message(self, command):
+    self.socket.request("GET", command)
+    time.sleep(1.0)
+    self.socket.getresponse()
+    print "penis"
+
+def load_credentials():
+  """
+  Load credential files from disk. 
+  """
+  cred_file = open(CREDENTIALS_FILE, 'r')
+  for line in cred_file:
+    config_dict = json.loads(line)
+    CREDENTIALS[USER_KEY] = config_dict[USER_KEY]
+    CREDENTIALS[PASS_KEY] = config_dict[PASS_KEY]
+    CREDENTIALS[FRONT_IP_KEY] = config_dict[FRONT_IP_KEY]
+    CREDENTIALS[BACK_IP_KEY] = config_dict[BACK_IP_KEY]
+  cred_file.close()
+
+def get_allowed():
+  allowed_file = open(ALLOWED_FILE, 'r')
+  for allowed in allowed_file:
+    person_dict = json.loads(allowed)
+    ALLOWED[person_dict["number"]] = person_dict
+  allowed_file.close()
+
+def write_to_log(message):
+  log = open(".log.txt", "a+")
+  log.write(str(message))
+  log.close()
 
 if __name__ == "__main__":
+  load_credentials()
+  get_allowed()
   door_controller = Door_Controller()
   door_controller.monitor()
