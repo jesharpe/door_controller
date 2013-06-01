@@ -18,20 +18,15 @@ FRONT_IP_KEY = "front_ip"
 BACK_IP_KEY = "back_ip"
 credentials = {}
 class Door_Controller():
-
   def __init__(self):
-
     # load credentials
     self.load_credentials()
-
     # authenticate with gmail
     self.running = True
     self.gmail_inbox = Gmail_Inbox()
-
     # create door objects
     self.door_one = Door_Lock(credentials[FRONT_IP_KEY])
     self.door_two = Door_Lock(credentials[BACK_IP_KEY])
-
     # load the allowed users
     self.allowed = {}
     self.get_allowed()
@@ -40,16 +35,13 @@ class Door_Controller():
     """
     Load credential files from disk. 
     """
-
     cred_file = open(CREDENTIALS_FILE, 'r')
-
     for line in cred_file:
       config_dict = json.loads(line)
       credentials[USER_KEY] = config_dict[USER_KEY]
       credentials[PASS_KEY] = config_dict[PASS_KEY]
       credentials[FRONT_IP_KEY] = config_dict[FRONT_IP_KEY]
       credentials[BACK_IP_KEY] = config_dict[BACK_IP_KEY]
-
     cred_file.close()
 
   def monitor(self):
@@ -85,16 +77,18 @@ class Door_Controller():
     allowed_file.close()
 
   def Front(self):
+    self.unlock(self.front_door)
     print "yay"
 
   def Back(self):
+    self.unlock(self.front_door)
     print "boo"
 
-  def unlock(self, door, name):
+  def unlock(self, door):
     #TODO need to write.  already have door connections, and the allowed dictionary has objecs with name number and admin=true/false. (look at .allowed.txt)
     print "unlock"
     
-  def add(self, name, number, is_admin="false"):
+  def Add(self, name, number, is_admin="false"):
     allowed_file = open(ALLOWED_FILE, 'a+')
     allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+is_admin+'}')
     self.allowed[number] = {"name":name, "number":number, "admin":is_admin}
@@ -102,7 +96,7 @@ class Door_Controller():
     allowed_file.close()
     print "add"
 
-  def remove(self, name=None, number=None):
+  def Remove(self, name=None, number=None):
     line_to_delete = None
     allowed_file = open(ALLOWED_FILE, 'r')
     allowed_lines = allowed_file.readlines()
@@ -121,9 +115,6 @@ class Door_Controller():
           allowed_file.write(allowed)
       allowed_file.close()
     print "remove"
-
-  def Timeout(self):
-    print "timeout"
 
 class Gmail_Inbox():
   def __init__(self):
