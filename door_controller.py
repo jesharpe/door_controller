@@ -54,14 +54,11 @@ class Door_Controller():
       print error
 
   def Front(self):
-    response = self.front_door.open()
+    response = self.front_door.open_door()
 
   def Back(self):
-    response = self.back_door.open()
+    response = self.back_door.open_door()
 
-  def unlock(self, door):
-    door.send_message("send message")
-    
   def Add(self, name, number, is_admin="false"):
     ALLOWED[number] = {"name":name, "number":number, "admin":is_admin}
     allowed_file = open(ALLOWED_FILE, 'a+')
@@ -118,11 +115,9 @@ class Door_Lock():
   def __init__(self, door_ip):
     self.socket = httplib.HTTPConnection(door_ip)
 
-  def send_message(self, command):
-    self.socket.request("GET", command)
-    time.sleep(1.0)
-    self.socket.getresponse()
-    print "penis"
+  def open_door(self):
+    self.socket.request("GET", "o")
+    return self.socket.getresponse()
 
 def load_credentials():
   """
@@ -148,10 +143,6 @@ def write_to_log(message):
   log = open(".log.txt", "a+")
   log.write(str(message))
   log.close()
-
-  def open(self, name):
-    self.socket.request("GET", "o %s" % name)
-    return self.socket.getresponse()
 
 if __name__ == "__main__":
   load_credentials()
