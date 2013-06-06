@@ -1,5 +1,6 @@
 import time
 import json
+import time
 import imaplib
 import httplib
 
@@ -32,7 +33,7 @@ class Door_Controller():
       # create door objects
       self.front_door = Door_Lock(CREDENTIALS[FRONT_IP_KEY])
       self.back_door = Door_Lock(CREDENTIALS[BACK_IP_KEY])
-    except Exception, e:
+    except Exception as e:
       write_to_log(e)
       print e
 
@@ -49,10 +50,10 @@ class Door_Controller():
       method = getattr(self, command["method"]) 
       try:
         method(command)
-      except Exception, e:
+      except Exception as e:
         write_to_log(e)
         print e
-    except Exception, e:
+    except Exception as e:
       write_to_log(e)
       print e
 
@@ -72,6 +73,7 @@ class Door_Controller():
     if number not in RESIDENTS:
       RESIDENTS[number] = {"name":name, "number":number, "admin":is_admin}
       allowed_file = open(RESIDENTS_FILE, 'a+')
+      is_admin = string.lower(str(is_admin))
       allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+str(is_admin)+'}\n')
       allowed_file.close()
       self.front_door.add_card_access(name)
