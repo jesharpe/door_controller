@@ -131,7 +131,7 @@ class Door_Lock():
   def __init__(self, door_ip):
     self.socket = httplib.HTTPConnection(door_ip)
 
-  def open_door(self, name):
+  def open_door(self, name, door):
     self.socket.request("GET", "o %s" % (name))
     write_to_log(name+" came through the "+door+" on "+time.strftime("%A, %B/%d/%Y at %I:%M %p"))
     return self.socket.getresponse()
