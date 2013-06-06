@@ -34,8 +34,7 @@ class Door_Controller():
       self.front_door = Door_Lock(CREDENTIALS[FRONT_IP_KEY])
       self.back_door = Door_Lock(CREDENTIALS[BACK_IP_KEY])
     except Exception as e:
-      write_to_log(e)
-      print e
+      write_to_log("initialization error: " + e)
 
   def monitor(self):
     while self.running:
@@ -51,11 +50,9 @@ class Door_Controller():
       try:
         method(command)
       except Exception as e:
-        write_to_log(e)
-        print e
+        write_to_log("execution error: " + e)
     except Exception as e:
-      write_to_log(e)
-      print e
+      write_to_log("invalid command error: " + e)
 
   def front(self, command):
     response = self.front_door.open_door(RESIDENTS[command["sender"]]["name"], "front")
@@ -77,7 +74,6 @@ class Door_Controller():
       allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+str(is_admin)+'}\n')
       allowed_file.close()
       self.front_door.add_card_access(name)
-    print "add"
 
   def remove(self, command):
     name = command["arguments"][0]
@@ -104,7 +100,6 @@ class Door_Controller():
         allowed_file.close()
       self.front_door.remove_card_access(name)
       self.back_door.remove_card_access(name)
-      print "remove"
 
 class Gmail_Inbox():
   def __init__(self):
@@ -170,7 +165,10 @@ def write_to_log(message):
   log.close()
 
 if __name__ == "__main__":
-  load_credentials()
-  get_allowed()
-  door_controller = Door_Controller()
-  door_controller.monitor()
+  try:
+    load_credentials()
+    get_allowed()
+    door_controller = Door_Controller()
+    door_controller.monitor()
+  except Exception as e:
+    write_to_log("file loading error: " + e)
