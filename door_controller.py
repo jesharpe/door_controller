@@ -133,6 +133,7 @@ class Door_Lock():
 
   def open_door(self, name):
     self.socket.request("GET", "o %s" % (name))
+    write_to_log(name+" came through the "+door+" on "+time.strftime("%A, %B/%d/%Y at %I:%M %p"))
     return self.socket.getresponse()
 
   def add_card_access(self, name):
