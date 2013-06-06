@@ -58,10 +58,10 @@ class Door_Controller():
       print e
 
   def front(self, command):
-    response = self.front_door.open_door(RESIDENTS[command["sender"]]["name"])
+    response = self.front_door.open_door(RESIDENTS[command["sender"]]["name"], "front")
 
   def back(self, command):
-    response = self.back_door.open_door(RESIDENTS[command["sender"]]["name"])
+    response = self.back_door.open_door(RESIDENTS[command["sender"]]["name"], "back")
 
   def add(self, command):
     name = command["arguments"][0]
