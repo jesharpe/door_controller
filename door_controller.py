@@ -7,12 +7,12 @@ import httplib
 GMAIL_IMAP = "imap.gmail.com"
 
 # disk files
-ALLOWED_FILE = ".allowed.txt"
+RESIDENTS_FILE = ".allowed.txt"
 CREDENTIALS_FILE = ".credentials.txt"
 LOG_FILE = ".log.txt"
 
 # allowed users
-ALLOWED = {}
+RESIDENTS = {}
 
 # credentials
 CREDENTIALS = {}
@@ -25,19 +25,22 @@ BACK_IP_KEY = "back_ip"
 
 class Door_Controller():
   def __init__(self):
-    # authenticate with gmail
-    self.running = True
-    self.gmail_inbox = Gmail_Inbox()
-    # create door objects
-    self.front_door = Door_Lock(CREDENTIALS[FRONT_IP_KEY])
-    self.back_door = Door_Lock(CREDENTIALS[BACK_IP_KEY])
+    try:
+      # authenticate with gmail
+      self.running = True
+      self.gmail_inbox = Gmail_Inbox()
+      # create door objects
+      self.front_door = Door_Lock(CREDENTIALS[FRONT_IP_KEY])
+      self.back_door = Door_Lock(CREDENTIALS[BACK_IP_KEY])
+    except Exception, e:
+      write_to_log(e)
+      print e
 
   def monitor(self):
     while self.running:
       command = self.gmail_inbox.get_command()
       if command:
-        print "weeee"
-        if command["sender"] in ALLOWED:
+        if command["sender"] in RESIDENTS:
           self.execute_command(command)
       time.sleep(1.0)
     
@@ -45,50 +48,61 @@ class Door_Controller():
     try:
       method = getattr(self, command["method"]) 
       try:
-        method(*command["arguments"])
-      except Exception, error:
-        write_to_log(error)
-        print error
-    except Exception, error:
-      write_to_log(error)
-      print error
+        method(command)
+      except Exception, e:
+        write_to_log(e)
+        print e
+    except Exception, e:
+      write_to_log(e)
+      print e
 
-  def Front(self):
-    response = self.front_door.open_door()
+  def Front(self, command):
+    response = self.front_door.open_door(RESIDENTS[command["sender"]]["name"])
 
-  def Back(self):
-    response = self.back_door.open_door()
+  def Back(self, command):
+    response = self.back_door.open_door(RESIDENTS[command["sender"]]["name"])
 
-  def Add(self, name, number, is_admin="false"):
-    ALLOWED[number] = {"name":name, "number":number, "admin":is_admin}
-    allowed_file = open(ALLOWED_FILE, 'a+')
-    allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+is_admin+'}')
-    allowed_file.close()
-#self.front_door.send_message("send a message")
+  def Add(self, command):
+    name = command["arguments"][0]
+    number = command["arguments"][1]
+    if len(command["arguments"]) > 2:
+      is_admin = command["arguments"][2]
+    else:
+      is_admin = False
+    if number not in RESIDENTS:
+      RESIDENTS[number] = {"name":name, "number":number, "admin":is_admin}
+      allowed_file = open(RESIDENTS_FILE, 'a+')
+      allowed_file.write('{"name":"'+name+'", "number":"'+number+'", "admin":'+str(is_admin)+'}\n')
+      allowed_file.close()
+      self.front_door.add_card_access(name)
     print "add"
 
-  def Remove(self, name=None, number=None):
-    line_to_delete = None
-    ALLOWED[number] = None
-    del ALLOWED[number]
-    allowed_file = open(ALLOWED_FILE, 'r')
-    allowed_lines = allowed_file.readlines()
-    allowed_file.close()
-    for allowed in allowed_lines:
-      if name:
-        if name in allowed:
-          line_to_delete = allowed
-      elif number:
-        if number in allowed:
-          line_to_delete = allowed
-    if line_to_delete:
-      allowed_file = open(ALLOWED_FILE, 'w+')
-      for allowed in allowed_lines:
-        if allowed != line_to_delete:
-          allowed_file.write(allowed)
+  def Remove(self, command):
+    name = command["arguments"][0]
+    number = command["arguments"][1]
+    if number in RESIDENTS:
+      line_to_delete = None
+      RESIDENTS[number] = None
+      del RESIDENTS[number]
+      allowed_file = open(RESIDENTS_FILE, 'r')
+      allowed_lines = allowed_file.readlines()
       allowed_file.close()
-#    self.front_door.send_message("send a message")
-    print "remove"
+      for allowed in allowed_lines:
+        if name:
+          if name in allowed:
+            line_to_delete = allowed
+        elif number:
+          if number in allowed:
+            line_to_delete = allowed
+      if line_to_delete:
+        allowed_file = open(RESIDENTS_FILE, 'w+')
+        for allowed in allowed_lines:
+          if allowed != line_to_delete:
+            allowed_file.write(allowed)
+        allowed_file.close()
+      self.front_door.remove_card_access(name)
+      self.back_door.remove_card_access(name)
+      print "remove"
 
 class Gmail_Inbox():
   def __init__(self):
@@ -115,8 +129,16 @@ class Door_Lock():
   def __init__(self, door_ip):
     self.socket = httplib.HTTPConnection(door_ip)
 
-  def open_door(self):
-    self.socket.request("GET", "o")
+  def open_door(self, name):
+    self.socket.request("GET", "o %s" % (name))
+    return self.socket.getresponse()
+
+  def add_card_access(self, name):
+    self.socket.request("GET", "a %s" % (name))
+    return self.socket.getresponse()
+
+  def remove_card_access(self, name):
+    self.socket.request("GET", "r %s" % (name))
     return self.socket.getresponse()
 
 def load_credentials():
@@ -133,15 +155,15 @@ def load_credentials():
   cred_file.close()
 
 def get_allowed():
-  allowed_file = open(ALLOWED_FILE, 'r')
+  allowed_file = open(RESIDENTS_FILE, 'r')
   for allowed in allowed_file:
     person_dict = json.loads(allowed)
-    ALLOWED[person_dict["number"]] = person_dict
+    RESIDENTS[person_dict["number"]] = person_dict
   allowed_file.close()
 
 def write_to_log(message):
   log = open(".log.txt", "a+")
-  log.write(str(message))
+  log.write(str(message) + '\n')
   log.close()
 
 if __name__ == "__main__":
