@@ -47,7 +47,7 @@ class Door_Controller():
     
   def execute_command(self, command):
     try:
-      method = getattr(self, command["method"]) 
+      method = getattr(self, string.lower(command["method"])) 
       try:
         method(command)
       except Exception as e:
@@ -57,13 +57,13 @@ class Door_Controller():
       write_to_log(e)
       print e
 
-  def Front(self, command):
+  def front(self, command):
     response = self.front_door.open_door(RESIDENTS[command["sender"]]["name"])
 
-  def Back(self, command):
+  def back(self, command):
     response = self.back_door.open_door(RESIDENTS[command["sender"]]["name"])
 
-  def Add(self, command):
+  def add(self, command):
     name = command["arguments"][0]
     number = command["arguments"][1]
     if len(command["arguments"]) > 2:
@@ -79,7 +79,7 @@ class Door_Controller():
       self.front_door.add_card_access(name)
     print "add"
 
-  def Remove(self, command):
+  def remove(self, command):
     name = command["arguments"][0]
     number = command["arguments"][1]
     if number in RESIDENTS:
