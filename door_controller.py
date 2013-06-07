@@ -34,7 +34,7 @@ class Door_Controller():
       self.front_door = Door_Lock(CREDENTIALS[FRONT_IP_KEY])
       self.back_door = Door_Lock(CREDENTIALS[BACK_IP_KEY])
     except Exception as e:
-      write_to_log("initialization error: " + e)
+      write_to_log("initialization error: " + str(e))
 
   def monitor(self):
     while self.running:
@@ -50,9 +50,9 @@ class Door_Controller():
       try:
         method(command)
       except Exception as e:
-        write_to_log("execution error: " + e)
+        write_to_log("execution error: " + str(e))
     except Exception as e:
-      write_to_log("invalid command error: " + e)
+      write_to_log("invalid command error: " + str(e))
 
   def front(self, command):
     response = self.front_door.open_door(RESIDENTS[command["sender"]]["name"], "front")
@@ -171,4 +171,4 @@ if __name__ == "__main__":
     door_controller = Door_Controller()
     door_controller.monitor()
   except Exception as e:
-    write_to_log("file loading error: " + e)
+    write_to_log("file loading error: " + str(e))
