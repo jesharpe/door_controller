@@ -108,19 +108,28 @@ class Gmail_Inbox():
 
   def get_command(self):
     command = {}
-    self.mailbox.select("door_lock")
-    msg_type, inbox = self.mailbox.search(None, "UNSEEN")
-    messages = inbox[0].split()
-    if len(messages) > 0:
-      message = messages[0]
-      msg_type, data = self.mailbox.fetch(message, "(BODY[HEADER.FIELDS (FROM)])")
-      command["sender"] = data[0][1].split("\"")[1].replace("(", "").replace(")", "").replace(" ", ".").replace("-", ".")
-      msg_type, data = self.mailbox.fetch(message, "(BODY[TEXT])")
-      command["method"] = data[0][1].split('\r')[0].split()[0]
-      command["arguments"] = data[0][1].split('\r')[0].split()[1:]
-      self.mailbox.store(message, "+FLAGS", "\\Deleted")
-      self.mailbox.expunge()
-      return command
+    mail_grabbed = False
+    while not mail_grabbed:
+      try:  
+        self.mailbox.select("door_lock")
+        msg_type, inbox = self.mailbox.search(None, "UNSEEN")
+        mail_grabbed = True
+      except Exception as e:
+        self.mailbox = imaplib.IMAP4_SSL(GMAIL_IMAP)
+        self.mailbox.login(CREDENTIALS[USER_KEY], CREDENTIALS[PASS_KEY])
+        write_to_log("Most likely disconnected: "+str(e))
+    if len(inbox) > 0:  
+      messages = inbox[0].split()
+      if len(messages) > 0:
+        message = messages[0]
+        msg_type, data = self.mailbox.fetch(message, "(BODY[HEADER.FIELDS (FROM)])")
+        command["sender"] = data[0][1].split("\"")[1].replace("(", "").replace(")", "").replace(" ", ".").replace("-", ".")
+        msg_type, data = self.mailbox.fetch(message, "(BODY[TEXT])")
+        command["method"] = data[0][1].split('\r')[0].split()[0]
+        command["arguments"] = data[0][1].split('\r')[0].split()[1:]
+        self.mailbox.store(message, "+FLAGS", "\\Deleted")
+        self.mailbox.expunge()
+        return command
 
 class Door_Lock():
   def __init__(self, door_ip):
@@ -151,6 +160,7 @@ def load_credentials():
     CREDENTIALS[FRONT_IP_KEY] = config_dict[FRONT_IP_KEY]
     CREDENTIALS[BACK_IP_KEY] = config_dict[BACK_IP_KEY]
   cred_file.close()
+  return True
 
 def get_allowed():
   allowed_file = open(RESIDENTS_FILE, 'r')
@@ -158,6 +168,7 @@ def get_allowed():
     person_dict = json.loads(allowed)
     RESIDENTS[person_dict["number"]] = person_dict
   allowed_file.close()
+  return True
 
 def write_to_log(message):
   log = open(".log.txt", "a+")
@@ -166,9 +177,10 @@ def write_to_log(message):
 
 if __name__ == "__main__":
   try:
-    load_credentials()
-    get_allowed()
-    door_controller = Door_Controller()
-    door_controller.monitor()
+    complete = load_credentials()
+    complete = get_allowed()
   except Exception as e:
     write_to_log("file loading error: " + str(e))
+  if complete:
+    door_controller = Door_Controller()
+    door_controller.monitor()
